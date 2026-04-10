@@ -418,3 +418,61 @@ SELECT
 SELECT COUNT(*) AS total_users FROM Users;
 SELECT COUNT(*) AS total_equipment FROM Equipment;
 SELECT COUNT(*) AS total_checkouts FROM Checkout_Records;
+
+-- =============================================================
+-- SECTION 11: VIEW TESTS
+-- (Run school_inventory.sql first to create the views)
+-- =============================================================
+
+SELECT '=== SECTION 11: VIEW TESTS ===' AS test_section;
+
+-- 11.1 Verify all four views exist
+SELECT 'TEST 11.1: All views exist in schema' AS test_name;
+SELECT table_name AS view_name
+FROM information_schema.views
+WHERE table_schema = 'school_inventory'
+  AND table_name IN (
+    'vw_available_equipment',
+    'vw_current_checkouts',
+    'vw_overdue_checkouts',
+    'vw_user_checkout_history'
+  )
+ORDER BY table_name;
+-- EXPECTED: 4 rows — all four view names
+
+-- 11.2 vw_available_equipment — should show equipment with availability_status = 'available'
+SELECT 'TEST 11.2: vw_available_equipment' AS test_name;
+SELECT * FROM vw_available_equipment;
+-- EXPECTED: rows for available equipment only (no checked_out or maintenance items)
+
+-- 11.3 vw_current_checkouts — should show active checkouts joined with borrower and item info
+SELECT 'TEST 11.3: vw_current_checkouts' AS test_name;
+SELECT * FROM vw_current_checkouts;
+-- EXPECTED: rows where checkout_status = 'checked_out', with borrower_name, item_name, serial_number, etc.
+
+-- 11.4 vw_overdue_checkouts — insert an overdue record and verify it appears
+SELECT 'TEST 11.4: vw_overdue_checkouts (setup overdue record)' AS test_name;
+INSERT INTO Users (first_name, last_name, email, password_hash, role, status)
+VALUES ('Overdue', 'Tester', 'overdue@school.edu', 'hash', 'student', 'active');
+INSERT INTO Equipment (item_name, category, serial_number, condition_status, availability_status)
+VALUES ('Overdue Tablet', 'tablet', 'SN-OVD01', 'good', 'checked_out');
+INSERT INTO Checkout_Records (user_id, equipment_id, checkout_date, due_date, checkout_status)
+VALUES (
+  (SELECT user_id FROM Users WHERE email = 'overdue@school.edu'),
+  (SELECT equipment_id FROM Equipment WHERE serial_number = 'SN-OVD01'),
+  '2025-01-01', '2025-01-08', 'overdue'
+);
+SELECT * FROM vw_overdue_checkouts;
+-- EXPECTED: at least 1 row — the record inserted above
+
+-- 11.5 vw_user_checkout_history — should show all checkout records regardless of status
+SELECT 'TEST 11.5: vw_user_checkout_history' AS test_name;
+SELECT * FROM vw_user_checkout_history;
+-- EXPECTED: all checkout records joined with borrower and equipment details, newest first
+
+-- 11.6 Filter history for a specific user (demonstrates intended app usage)
+SELECT 'TEST 11.6: vw_user_checkout_history filtered by user email' AS test_name;
+SELECT *
+FROM vw_user_checkout_history
+WHERE email = 'john.student@school.edu';
+-- EXPECTED: all checkout records belonging to john.student@school.edu
