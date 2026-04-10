@@ -84,6 +84,88 @@ CREATE TABLE IF NOT EXISTS `school_inventory`.`Checkout_Records` (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Views
+-- -----------------------------------------------------
+
+-- View 1: All equipment currently available for checkout
+CREATE OR REPLACE VIEW `school_inventory`.`vw_available_equipment` AS
+SELECT
+  `equipment_id`,
+  `item_name`,
+  `category`,
+  `serial_number`,
+  `condition_status`,
+  `location`
+FROM `school_inventory`.`Equipment`
+WHERE `availability_status` = 'available';
+
+
+-- View 2: All active (currently checked-out) items with borrower and equipment details
+CREATE OR REPLACE VIEW `school_inventory`.`vw_current_checkouts` AS
+SELECT
+  cr.`checkout_id`,
+  cr.`checkout_date`,
+  cr.`due_date`,
+  cr.`checkout_status`,
+  u.`user_id`,
+  CONCAT(u.`first_name`, ' ', u.`last_name`) AS `borrower_name`,
+  u.`email`,
+  u.`phone`,
+  e.`equipment_id`,
+  e.`item_name`,
+  e.`category`,
+  e.`serial_number`,
+  e.`location`
+FROM `school_inventory`.`Checkout_Records` cr
+JOIN `school_inventory`.`Users` u ON cr.`user_id` = u.`user_id`
+JOIN `school_inventory`.`Equipment` e ON cr.`equipment_id` = e.`equipment_id`
+WHERE cr.`checkout_status` = 'checked_out';
+
+
+-- View 3: Overdue checkouts — items with checkout_status marked as overdue
+CREATE OR REPLACE VIEW `school_inventory`.`vw_overdue_checkouts` AS
+SELECT
+  cr.`checkout_id`,
+  cr.`checkout_date`,
+  cr.`due_date`,
+  u.`user_id`,
+  CONCAT(u.`first_name`, ' ', u.`last_name`) AS `borrower_name`,
+  u.`email`,
+  u.`phone`,
+  e.`equipment_id`,
+  e.`item_name`,
+  e.`category`,
+  e.`serial_number`,
+  e.`location`
+FROM `school_inventory`.`Checkout_Records` cr
+JOIN `school_inventory`.`Users` u ON cr.`user_id` = u.`user_id`
+JOIN `school_inventory`.`Equipment` e ON cr.`equipment_id` = e.`equipment_id`
+WHERE cr.`checkout_status` = 'overdue';
+
+
+-- View 4: Full checkout history for all users — useful for admin audit and student history pages
+CREATE OR REPLACE VIEW `school_inventory`.`vw_user_checkout_history` AS
+SELECT
+  cr.`checkout_id`,
+  u.`user_id`,
+  CONCAT(u.`first_name`, ' ', u.`last_name`) AS `borrower_name`,
+  u.`email`,
+  u.`role`,
+  e.`equipment_id`,
+  e.`item_name`,
+  e.`category`,
+  e.`serial_number`,
+  cr.`checkout_date`,
+  cr.`due_date`,
+  cr.`return_date`,
+  cr.`checkout_status`
+FROM `school_inventory`.`Checkout_Records` cr
+JOIN `school_inventory`.`Users` u ON cr.`user_id` = u.`user_id`
+JOIN `school_inventory`.`Equipment` e ON cr.`equipment_id` = e.`equipment_id`
+ORDER BY cr.`checkout_date` DESC;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
