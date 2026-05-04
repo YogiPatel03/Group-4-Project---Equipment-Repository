@@ -165,6 +165,74 @@ JOIN `school_inventory`.`Users` u ON cr.`user_id` = u.`user_id`
 JOIN `school_inventory`.`Equipment` e ON cr.`equipment_id` = e.`equipment_id`
 ORDER BY cr.`checkout_date` DESC;
 
+-- Triggers: Gisele 
+
+DELIMITER $$
+-- Trigger 1: Preventing non_students from checking out equipment
+CREATE TRIGGER trg_before_checkout
+BEFORE INSERT ON Checkout_Records
+FOR EACH ROW 
+BEGIN 
+  DECLARE user_role VARCHAR(250);
+
+  SELECT role 
+  INTO user_role
+  FROM Users 
+  WHERE user_id= NEW.user_id;
+
+  IF user_role <> 'student' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'only students can check out items/equipment';
+  END IF;
+END$$
+
+-- Trigger 2: Preventing checking out equipment that is unavailable (already been checked out)
+CREATE TRIGGER  trg_before_check_available_status
+BEFORE INSERT ON Checkout_Records
+FOR EACH ROW 
+BEGIN 
+  DECLARE item_status VARCHAR(250);
+
+  SELECT availability_status
+  INTO item_status
+  FROM Equipment
+  WHERE equipment_id=NEW.equipment_id;
+
+  IF item_status <> 'available' THEN 
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'this equipment/item is not available for checkout';
+  END IF;
+
+END$$
+
+-- Trigger 3: When an item is checked, mark item as 'checked out'
+CREATE TRIGGER  trg_after_mark_checked_out
+AFTER INSERT ON Checkout_Records
+FOR EACH ROW 
+BEGIN 
+  IF NEW.checkout_status = 'checked_out'
+    THEN
+      UPDATE Equipment
+      SET availability_status = 'checked_out'
+      WHERE equipment_id = NEW.equipment_id;
+  END IF;
+END$$
+
+-- Trigger 4: When an item is returned, mark it as 'available'
+CREATE TRIGGER trg_after_mark_available
+AFTER UPDATE ON Checkout_Records
+FOR EACH ROW 
+BEGIN 
+  IF NEW.checkout_status = 'returned'
+    AND OLD.checkout_status <> 'returned' THEN 
+    UPDATE Equipment
+    SET availability_status = 'available'
+    WHERE equipment_id = NEW.equipment_id;
+  END IF;
+END$$
+
+DELIMITER ;
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
