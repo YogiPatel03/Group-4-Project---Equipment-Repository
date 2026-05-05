@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
-from auth import login_user
+from .auth import login_user
+from .student_dashboard import open_student_dashboard
+
 
 def clear_errors():
     error_label.config(text="")
@@ -37,7 +39,7 @@ def handle_login():
     if user["role"] == "admin":
         messagebox.showinfo("Success", "Admin login successful.")
     else:
-        messagebox.showinfo("Success", "Student login successful.")
+        open_student_dashboard(root, user)
 
 root = tk.Tk()
 root.title("School Inventory Login")
