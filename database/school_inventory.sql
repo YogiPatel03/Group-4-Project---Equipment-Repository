@@ -233,6 +233,110 @@ END$$
 
 DELIMITER ;
 
+-- Cursor Procedure: Overdue Checkout Report (Jack)
+
+DELIMITER $$
+
+CREATE PROCEDURE `school_inventory`.`GetOverdueCheckouts`()
+BEGIN
+    DECLARE v_checkout_id     INT;
+    DECLARE v_user_id         INT;
+    DECLARE v_first_name      VARCHAR(50);
+    DECLARE v_last_name       VARCHAR(50);
+    DECLARE v_email           VARCHAR(100);
+    DECLARE v_equipment_id    INT;
+    DECLARE v_item_name       VARCHAR(100);
+    DECLARE v_serial_number   VARCHAR(100);
+    DECLARE v_checkout_date   DATETIME;
+    DECLARE v_due_date        DATETIME;
+    DECLARE v_days_overdue    INT;
+    DECLARE done              BOOLEAN DEFAULT FALSE;
+
+    DECLARE overdue_cursor CURSOR FOR
+        SELECT
+            cr.`checkout_id`,
+            u.`user_id`,
+            u.`first_name`,
+            u.`last_name`,
+            u.`email`,
+            e.`equipment_id`,
+            e.`item_name`,
+            e.`serial_number`,
+            cr.`checkout_date`,
+            cr.`due_date`,
+            DATEDIFF(CURDATE(), cr.`due_date`) AS days_overdue
+        FROM `school_inventory`.`Checkout_Records` cr
+        JOIN `school_inventory`.`Users` u ON cr.`user_id` = u.`user_id`
+        JOIN `school_inventory`.`Equipment` e ON cr.`equipment_id` = e.`equipment_id`
+        WHERE cr.`checkout_status` = 'overdue'
+           OR (cr.`checkout_status` = 'checked_out' AND cr.`due_date` < CURDATE())
+        ORDER BY cr.`due_date` ASC;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    DROP TEMPORARY TABLE IF EXISTS OverdueReport;
+    CREATE TEMPORARY TABLE OverdueReport (
+        checkout_id     INT,
+        user_id         INT,
+        first_name      VARCHAR(50),
+        last_name       VARCHAR(50),
+        email           VARCHAR(100),
+        equipment_id    INT,
+        item_name       VARCHAR(100),
+        serial_number   VARCHAR(100),
+        checkout_date   DATETIME,
+        due_date        DATETIME,
+        days_overdue    INT
+    );
+
+    OPEN overdue_cursor;
+
+    read_loop: LOOP
+        FETCH overdue_cursor INTO
+            v_checkout_id,
+            v_user_id,
+            v_first_name,
+            v_last_name,
+            v_email,
+            v_equipment_id,
+            v_item_name,
+            v_serial_number,
+            v_checkout_date,
+            v_due_date,
+            v_days_overdue;
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        UPDATE `school_inventory`.`Checkout_Records`
+        SET `checkout_status` = 'overdue'
+        WHERE `checkout_id` = v_checkout_id
+          AND `checkout_status` = 'checked_out';
+
+        INSERT INTO OverdueReport VALUES (
+            v_checkout_id,
+            v_user_id,
+            v_first_name,
+            v_last_name,
+            v_email,
+            v_equipment_id,
+            v_item_name,
+            v_serial_number,
+            v_checkout_date,
+            v_due_date,
+            v_days_overdue
+        );
+
+    END LOOP;
+
+    CLOSE overdue_cursor;
+
+    SELECT * FROM OverdueReport ORDER BY days_overdue DESC;
+
+END$$
+
+DELIMITER ;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
