@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import messagebox
 from .auth import login_user
+from .admin_dashboard import open_admin_dashboard
 from .student_dashboard import open_student_dashboard
 
 
@@ -37,7 +37,7 @@ def handle_login():
         return
 
     if user["role"] == "admin":
-        messagebox.showinfo("Success", "Admin login successful.")
+        open_admin_dashboard(root, user)
     else:
         open_student_dashboard(root, user)
 
