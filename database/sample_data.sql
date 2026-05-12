@@ -28,7 +28,7 @@ VALUES
 
 ('iPad', 'Tablet', 'IP-2002', 'good', 'available', 'Room 102'),
 ('iPad', 'Tablet', 'IP-2003', 'good', 'available', 'Room 102'),
-('iPad', 'Tablet', 'IP-2004', 'fair', 'checked_out', 'Room 102'),
+('iPad', 'Tablet', 'IP-2004', 'fair', 'available', 'Room 102'),
 
 ('Canon Camera', 'Camera', 'CC-3002', 'good', 'available', 'Media Lab'),
 ('Canon Camera', 'Camera', 'CC-3003', 'fair', 'available', 'Media Lab'),
@@ -37,4 +37,4 @@ VALUES
 ('Microscope', 'Lab Equipment', 'MS-4003', 'fair', 'available', 'Science Lab'),
 
 ('Projector', 'Classroom Tech', 'PR-5002', 'good', 'available', 'Library'),
-('Projector', 'Classroom Tech', 'PR-5003', 'damaged', 'maintenance', 'Library');
+('Projector', 'Classroom Tech', 'PR-5003', 'damaged', 'available', 'Library');
