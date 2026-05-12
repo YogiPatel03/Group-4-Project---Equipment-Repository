@@ -37,4 +37,4 @@ VALUES
 ('Microscope', 'Lab Equipment', 'MS-4003', 'fair', 'available', 'Science Lab'),
 
 ('Projector', 'Classroom Tech', 'PR-5002', 'good', 'available', 'Library'),
-('Projector', 'Classroom Tech', 'PR-5003', 'damaged', 'available', 'Library');
+('Projector', 'Classroom Tech', 'PR-5003', 'damaged', 'maintenance', 'Library');
