@@ -349,8 +349,14 @@ def open_admin_dashboard(login_root, user):
             messagebox.showerror("Database Error", str(e))
 
     def fill_equipment_form(event=None):
-        values = selected_values(equipment_tree, "Please select an equipment item.")
-        if values is None:
+        selected = equipment_tree.focus()
+
+        if not selected:
+            return
+
+        values = equipment_tree.item(selected, "values")
+
+        if not values:
             return
 
         set_entry(equipment_name_entry, values[1])
@@ -501,8 +507,14 @@ def open_admin_dashboard(login_root, user):
             messagebox.showerror("Database Error", str(e))
 
     def fill_user_form(event=None):
-        values = selected_values(users_tree, "Please select a user.")
-        if values is None:
+        selected = users_tree.focus()
+
+        if not selected:
+            return
+
+        values = users_tree.item(selected, "values")
+
+        if not values:
             return
 
         set_entry(user_first_name_entry, values[1])
@@ -633,7 +645,7 @@ def open_admin_dashboard(login_root, user):
             messagebox.showerror("Delete User Failed", str(e))
 
     users_button_row = tk.Frame(users_form, bg="white")
-    users_button_row.grid(row=3, column=2, columnspan=2, sticky="e")
+    users_button_row.grid(row=4, column=0, columnspan=4, sticky="e", pady=(10, 0))
 
     make_button(users_button_row, "Add", add_user).pack(side="left", padx=4, ipady=7)
     make_button(users_button_row, "Update", update_user).pack(side="left", padx=4, ipady=7)
